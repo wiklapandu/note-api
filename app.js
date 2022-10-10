@@ -3,6 +3,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const slugify = require("slugify");
 
 require("dotenv").config();
 require("./db/connect");
@@ -13,6 +14,7 @@ const port = 3000;
 
 /* Models */
 const { User } = require("./model/User");
+const { Note } = require("./model/Note");
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -62,8 +64,121 @@ function checkToken(req, res, next) {
     });
 }
 
-router.get("/", checkToken, (req, res) => {
+router.get("/", (req, res) => {
   return res.json("test");
+});
+
+router.get("/note", checkToken, (req, res) => {
+  const { id } = req.params;
+  const user = req.user;
+
+  Note.find({ userId: user._id })
+    .then((notes) => {
+      let arrNote = notes.map((note) => {
+        return {
+          id: note._id,
+          title: note.title,
+          slug: note.slug,
+          desc: note.desc,
+        };
+      });
+
+      res.json({
+        status: "success",
+        notes: arrNote,
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
+});
+
+router.get("/note/:id", checkToken, (req, res) => {
+  const { id } = req.params;
+  const user = req.user;
+
+  Note.findOne({ _id: id, userId: user._id })
+    .then((note) => {
+      res.json({
+        status: "success",
+        note: {
+          id: note._id,
+          title: note.title,
+          slug: note.slug,
+          desc: note.desc,
+        },
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
+});
+
+router.put("/note/:id", checkToken, (req, res) => {
+  const { id } = req.params;
+  const { title, desc } = req.body;
+
+  const user = req.user;
+
+  Note.findOneAndUpdate(
+    { _id: id, userId: user._id },
+    {
+      title,
+      slug: slugify(title),
+      desc,
+    }
+  )
+    .then((note) => {
+      res.json({
+        status: "success",
+        note: {
+          id: note._id,
+          title: note.title,
+          slug: note.slug,
+          desc: note.desc,
+        },
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
+});
+
+router.post("/note", checkToken, (req, res) => {
+  const user = req.user;
+  const { title, desc } = req.body;
+  Note.create({
+    title,
+    userId: user._id,
+    slug: slugify(title),
+    desc,
+  })
+    .then((note) => {
+      res.json({
+        status: "success",
+        note: {
+          id: note._id,
+          title: note.title,
+          slug: note.slug,
+          desc: note.desc,
+        },
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
 });
 
 router.post("/auth/login", (req, res) => {
