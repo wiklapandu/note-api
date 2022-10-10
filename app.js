@@ -96,11 +96,40 @@ router.get("/note", checkToken, (req, res) => {
     });
 });
 
+router.put("/user", checkToken, (req, res) => {
+  const user = req.user;
+  const { name } = req.body;
+  if (!name) {
+    res.json({
+      status: "fail",
+      error: "Name Required",
+    });
+    return;
+  }
+
+  User.findOneAndUpdate({ _id: user._id }, { name }, { new: true })
+    .then((user) => {
+      res.json({
+        status: "success",
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
+});
+
 router.get("/note/:id", checkToken, (req, res) => {
   const { id } = req.params;
   const user = req.user;
 
-  Note.findOne({ _id: id, userId: user._id })
+  Note.findOne({ _id: id, userId: user._id }, { new: true })
     .then((note) => {
       res.json({
         status: "success",
@@ -115,7 +144,7 @@ router.get("/note/:id", checkToken, (req, res) => {
     .catch((err) => {
       res.json({
         status: "error",
-        error: err,
+        error: "Note not found",
       });
     });
 });
