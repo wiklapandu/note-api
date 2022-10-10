@@ -1,10 +1,18 @@
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+require("dotenv").config();
+require("./db/connect");
 
 const app = express();
 const router = express.Router();
 const port = 3000;
+
+/* Models */
+const { User } = require("./model/User");
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -16,17 +24,51 @@ router.get("/", (req, res) => {
 
 router.post("/auth/login", (req, res) => {
   const { email, password } = req.body;
-  return res.json({
-    status: "success",
-    user: {
-      email,
-    },
+  if (!email || !password) {
+    res.json({
+      status: "fail",
+      error: "Email and Password is required",
+    });
+    return;
+  }
+  User.findOne({ email }).then((user) => {
+    if (!user) {
+      res.json({ status: "fail", error: "User doesn't exist" });
+    } else {
+      if (!bcrypt.compareSync(password, user.password)) {
+        res.json({ status: "fail", error: "wrong password" });
+      } else {
+        const token = jwt.sign(
+          { id: user._id, email: user.email },
+          process.env.SECRET_JWT_CODE
+        );
+        res.json({ status: "success", token });
+      }
+    }
   });
 });
 
 router.post("/auth/register", (req, res) => {
   const { email, password } = req.body;
-  return res.json({});
+  if (!email || !password) {
+    res.json({
+      status: "fail",
+      error: "Email and Password is required",
+    });
+    return;
+  }
+  User.create({
+    email,
+    password: bcrypt.hashSync(password, 10),
+  })
+    .then((user) => {
+      const token = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.SECRET_JWT_CODE
+      );
+      res.json({ status: "success", token });
+    })
+    .catch((err) => res.json({ status: "error", error: err }));
 });
 
 router.get("/", (req, res) => {
