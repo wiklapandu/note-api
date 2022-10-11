@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const slugify = require("slugify");
+const cors = require("cors");
 
 require("dotenv").config();
 require("./db/connect");
@@ -16,6 +17,7 @@ const port = process.env.PORT || 3000;
 const { User } = require("./model/User");
 const { Note } = require("./model/Note");
 
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
