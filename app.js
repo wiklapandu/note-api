@@ -71,7 +71,6 @@ router.get("/", (req, res) => {
 });
 
 router.get("/note", checkToken, (req, res) => {
-  const { id } = req.params;
   const user = req.user;
 
   Note.find({ userId: user._id })
@@ -82,6 +81,8 @@ router.get("/note", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          created_at: note.created_at,
+          updated_at: note.updated_at,
         };
       });
 
@@ -131,7 +132,7 @@ router.get("/note/:id", checkToken, (req, res) => {
   const { id } = req.params;
   const user = req.user;
 
-  Note.findOne({ _id: id, userId: user._id }, { new: true })
+  Note.findOne({ _id: id, userId: user._id })
     .then((note) => {
       res.json({
         status: "success",
@@ -140,6 +141,8 @@ router.get("/note/:id", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          created_at: note.created_at,
+          updated_at: note.updated_at,
         },
       });
     })
@@ -151,9 +154,27 @@ router.get("/note/:id", checkToken, (req, res) => {
     });
 });
 
+router.delete("/note/:id", checkToken, (req, res) => {
+  const { id } = req.params;
+  Note.findOneAndDelete({ _id: id, userId: user._id })
+    .then(() => {
+      res.json({
+        status: "success",
+        message: "Note has deleted",
+      });
+    })
+    .catch((err) => {
+      res.json({
+        status: "error",
+        error: err,
+      });
+    });
+});
+
 router.put("/note/:id", checkToken, (req, res) => {
   const { id } = req.params;
   const { title, desc } = req.body;
+  const date = new Date();
 
   const user = req.user;
 
@@ -161,8 +182,9 @@ router.put("/note/:id", checkToken, (req, res) => {
     { _id: id, userId: user._id },
     {
       title,
-      slug: slugify(title),
+      slug: slugify(title) + `-${date.getTime()}`,
       desc,
+      updated_at: date.getTime(),
     }
   )
     .then((note) => {
@@ -173,6 +195,8 @@ router.put("/note/:id", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          created_at: note.created_at,
+          updated_at: note.updated_at,
         },
       });
     })
@@ -187,11 +211,14 @@ router.put("/note/:id", checkToken, (req, res) => {
 router.post("/note", checkToken, (req, res) => {
   const user = req.user;
   const { title, desc } = req.body;
+  const date = new Date();
   Note.create({
     title,
     userId: user._id,
-    slug: slugify(title),
+    slug: slugify(title) + `-${date.getTime()}`,
     desc,
+    created_at: date.getTime(),
+    updated_at: date.getTime(),
   })
     .then((note) => {
       res.json({
@@ -201,6 +228,8 @@ router.post("/note", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          created_at: note.created_at,
+          updated_at: note.updated_at,
         },
       });
     })

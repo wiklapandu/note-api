@@ -13,6 +13,12 @@ const NoteSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  created_at: {
+    type: String,
+  },
+  updated_at: {
+    type: String,
+  },
   desc: {
     type: String,
   },
