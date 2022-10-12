@@ -99,6 +99,17 @@ router.get("/note", checkToken, (req, res) => {
     });
 });
 
+router.get("/user", checkToken, (req, res) => {
+  const user = req.user;
+  res.json({
+    status: "success",
+    user: {
+      name: user.name,
+      email: user.email,
+    },
+  });
+});
+
 router.put("/user", checkToken, (req, res) => {
   const user = req.user;
   const { name } = req.body;
@@ -156,6 +167,7 @@ router.get("/note/:id", checkToken, (req, res) => {
 
 router.delete("/note/:id", checkToken, (req, res) => {
   const { id } = req.params;
+  const user = req.user;
   Note.findOneAndDelete({ _id: id, userId: user._id })
     .then(() => {
       res.json({
@@ -268,21 +280,22 @@ router.post("/auth/login", (req, res) => {
 });
 
 router.post("/auth/register", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const { email, password, name } = req.body;
+  if (!email || !password || !name) {
     res.json({
       status: "fail",
-      error: "Email and Password is required",
+      error: "Name, Email, and Password is required",
     });
     return;
   }
   User.create({
+    name,
     email,
     password: bcrypt.hashSync(password, 10),
   })
     .then((user) => {
       const token = jwt.sign(
-        { id: user._id, email: user.email },
+        { id: user._id, name: user.name, email: user.email },
         process.env.SECRET_JWT_CODE
       );
       res.json({ status: "success", token });
