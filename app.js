@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const slugify = require("slugify");
 const cors = require("cors");
+const { body, validationResult } = require("express-validator");
 
 require("dotenv").config();
 require("./db/connect");
@@ -225,7 +226,7 @@ router.post("/note", checkToken, (req, res) => {
   const { title, desc } = req.body;
   const date = new Date();
   Note.create({
-    title,
+    title: title || "untitled",
     userId: user._id,
     slug: slugify(title) + `-${date.getTime()}`,
     desc,
@@ -253,55 +254,89 @@ router.post("/note", checkToken, (req, res) => {
     });
 });
 
-router.post("/auth/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.json({
-      status: "fail",
-      error: "Email and Password is required",
-    });
-    return;
-  }
-  User.findOne({ email }).then((user) => {
-    if (!user) {
-      res.json({ status: "fail", error: "User doesn't exist" });
-    } else {
-      if (!bcrypt.compareSync(password, user.password)) {
-        res.json({ status: "fail", error: "wrong password" });
+router.post(
+  "/auth/login",
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required!")
+    .isEmail()
+    .withMessage("Email format invalid!"),
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required!")
+    .isLength({ min: 8 })
+    .withMessage("Password min length 8 char"),
+  (req, res) => {
+    const { email, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json({
+        status: "fail",
+        errors: errors.mapped(),
+      });
+      return;
+    }
+    User.findOne({ email }).then((user) => {
+      if (!user) {
+        res.json({ status: "fail", error: "User doesn't exist" });
       } else {
+        if (!bcrypt.compareSync(password, user.password)) {
+          res.json({ status: "fail", error: "wrong password" });
+        } else {
+          const token = jwt.sign(
+            { id: user._id, email: user.email },
+            process.env.SECRET_JWT_CODE
+          );
+          res.json({ status: "success", token });
+        }
+      }
+    });
+  }
+);
+
+router.post(
+  "/auth/register",
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required!")
+    .isEmail()
+    .withMessage("Email format invalid!"),
+  body("email").custom((value) => {
+    return User.findOne({ email: value }).then(() =>
+      Promise.reject("Email already exist!")
+    );
+  }),
+  body("name").notEmpty().withMessage("Name is required!"),
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required!")
+    .isLength({ min: 8 })
+    .withMessage("Password min length 8 char"),
+  (req, res) => {
+    const { email, password, name } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.json({
+        status: "fail",
+        errors: errors.mapped(),
+      });
+      return;
+    }
+    User.create({
+      name,
+      email,
+      password: bcrypt.hashSync(password, 10),
+    })
+      .then((user) => {
         const token = jwt.sign(
-          { id: user._id, email: user.email },
+          { id: user._id, name: user.name, email: user.email },
           process.env.SECRET_JWT_CODE
         );
         res.json({ status: "success", token });
-      }
-    }
-  });
-});
-
-router.post("/auth/register", (req, res) => {
-  const { email, password, name } = req.body;
-  if (!email || !password || !name) {
-    res.json({
-      status: "fail",
-      error: "Name, Email, and Password is required",
-    });
-    return;
+      })
+      .catch((err) => res.json({ status: "error", error: err }));
   }
-  User.create({
-    name,
-    email,
-    password: bcrypt.hashSync(password, 10),
-  })
-    .then((user) => {
-      const token = jwt.sign(
-        { id: user._id, name: user.name, email: user.email },
-        process.env.SECRET_JWT_CODE
-      );
-      res.json({ status: "success", token });
-    })
-    .catch((err) => res.json({ status: "error", error: err }));
-});
+);
 
 router.get("/", (req, res) => {
   return res.json({
