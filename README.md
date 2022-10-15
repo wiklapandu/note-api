@@ -14,7 +14,7 @@ API for login user
 
 ```json
 {
-    "email": "[required]",
+    "email": "[required|email]",
     "password": "[required]"
 }
 ```
@@ -45,16 +45,29 @@ API for login user
 
 ## Error Response
 
-**Condition** : If provided data is invalid, e.g. a email field is empty or password is empty.
+**Condition** : If provided data is invalid.
 
 **Code** : `400 BAD REQUEST`
 
 **Content example** :
 
 ```json
+
 {
     "status": "fail",
-    "error": "Email and Password is required",
+    "errors": {
+        "email": {
+            "value": "wrong@format",
+            "msg": "Email format invalid!",
+            "param": "email",
+            "location": "body"
+        },
+        "password": {
+            "msg": "Password is required!",
+            "param": "password",
+            "location": "body"
+        }
+    },
 }
 ```
 
@@ -67,7 +80,12 @@ API for login user
 ```json
 { 
     "status": "fail", 
-    "error": "User doesn't exist"
+    "errors": {
+        "main": {
+            "value": "wrong@format",
+            "msg": "User doesn't exist",
+        },
+    },
 }
 ```
 
@@ -80,7 +98,11 @@ API for login user
 ```json
 { 
     "status": "fail", 
-    "error": "wrong password" 
+    "errors": {
+        "main": {
+            "msg": "user password incorrect",
+        },
+    },
 }
 ```
 
@@ -134,7 +156,7 @@ Create an Account for the authenticated User if an Account for that User does no
 
 ## Error Response
 
-**Condition** : If provided data is invalid, e.g. a email field is empty or password is empty.
+**Condition** : If provided data is invalid.
 
 **Code** : `400 BAD REQUEST`
 
@@ -143,32 +165,18 @@ Create an Account for the authenticated User if an Account for that User does no
 ```json
 {
     "status": "fail",
-    "error": "Email and Password is required",
-}
-```
-
-**Condition** : If user not exist.
-
-**Code** : `400 BAD REQUEST`
-
-**Content example** :
-
-```json
-{ 
-    "status": "fail", 
-    "error": "User doesn't exist"
-}
-```
-
-**Condition** : If user password incorrect.
-
-**Code** : `400 BAD REQUEST`
-
-**Content example** :
-
-```json
-{ 
-    "status": "fail", 
-    "error": "wrong password" 
+    "errors": {
+        "email": {
+            "value": "wrong@format",
+            "msg": "Email format invalid!",
+            "param": "email",
+            "location": "body"
+        },
+        "password": {
+            "msg": "Password is required!",
+            "param": "password",
+            "location": "body"
+        }
+    },
 }
 ```

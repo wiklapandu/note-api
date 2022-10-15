@@ -278,10 +278,24 @@ router.post(
     }
     User.findOne({ email }).then((user) => {
       if (!user) {
-        res.json({ status: "fail", error: "User doesn't exist" });
+        res.json({
+          status: "fail",
+          errors: {
+            main: {
+              msg: "User doesn't exist",
+            },
+          },
+        });
       } else {
         if (!bcrypt.compareSync(password, user.password)) {
-          res.json({ status: "fail", error: "wrong password" });
+          res.json({
+            status: "fail",
+            errors: {
+              main: {
+                msg: "user password incorrect",
+              },
+            },
+          });
         } else {
           const token = jwt.sign(
             { id: user._id, email: user.email },
