@@ -1,6 +1,8 @@
 # Token
 Before use token, you should get api token. To get Api Token `login` or `registration` first.
 
+**Code** : `401 Unaouthorized`
+
 **Use API without API TOKEN**
 ```json
 {

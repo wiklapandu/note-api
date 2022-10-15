@@ -54,12 +54,13 @@ function fetchUserByToken(req) {
 /* middleware function */
 
 function checkToken(req, res, next) {
-  fetchUserByToken(req)
+  fetchUserByToken(req, res)
     .then((user) => {
       req.user = user;
       next();
     })
     .catch((err) => {
+      res.status(401);
       res.json({
         status: "fail",
         error: err,
@@ -86,6 +87,7 @@ router.get("/note", checkToken, (req, res) => {
           updated_at: note.updated_at,
         };
       });
+      res.status(200);
 
       res.json({
         status: "success",
@@ -93,6 +95,7 @@ router.get("/note", checkToken, (req, res) => {
       });
     })
     .catch((err) => {
+      res.status(400);
       res.json({
         status: "error",
         error: err,
@@ -146,6 +149,7 @@ router.get("/note/:id", checkToken, (req, res) => {
 
   Note.findOne({ _id: id, userId: user._id })
     .then((note) => {
+      res.status(200);
       res.json({
         status: "success",
         note: {
@@ -159,6 +163,7 @@ router.get("/note/:id", checkToken, (req, res) => {
       });
     })
     .catch((err) => {
+      res.status(404);
       res.json({
         status: "error",
         error: "Note not found",
@@ -201,6 +206,7 @@ router.put("/note/:id", checkToken, (req, res) => {
     }
   )
     .then((note) => {
+      res.status(201);
       res.json({
         status: "success",
         note: {
@@ -214,9 +220,10 @@ router.put("/note/:id", checkToken, (req, res) => {
       });
     })
     .catch((err) => {
+      res.status(400);
       res.json({
         status: "error",
-        error: err,
+        error: "fail update note",
       });
     });
 });
@@ -234,6 +241,7 @@ router.post("/note", checkToken, (req, res) => {
     updated_at: date.getTime(),
   })
     .then((note) => {
+      res.status(201);
       res.json({
         status: "success",
         note: {
@@ -247,6 +255,7 @@ router.post("/note", checkToken, (req, res) => {
       });
     })
     .catch((err) => {
+      res.status(400);
       res.json({
         status: "error",
         error: err,
@@ -270,6 +279,7 @@ router.post(
     const { email, password } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      res.status(400);
       res.json({
         status: "fail",
         errors: errors.mapped(),
@@ -278,6 +288,7 @@ router.post(
     }
     User.findOne({ email }).then((user) => {
       if (!user) {
+        res.status(400);
         res.json({
           status: "fail",
           errors: {
@@ -288,6 +299,7 @@ router.post(
         });
       } else {
         if (!bcrypt.compareSync(password, user.password)) {
+          res.status(400);
           res.json({
             status: "fail",
             errors: {
@@ -301,6 +313,7 @@ router.post(
             { id: user._id, email: user.email },
             process.env.SECRET_JWT_CODE
           );
+          res.status(200);
           res.json({ status: "success", token });
         }
       }
@@ -330,6 +343,7 @@ router.post(
     const { email, password, name } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      res.status(400);
       res.json({
         status: "fail",
         errors: errors.mapped(),
@@ -346,9 +360,13 @@ router.post(
           { id: user._id, name: user.name, email: user.email },
           process.env.SECRET_JWT_CODE
         );
+        res.status(200);
         res.json({ status: "success", token });
       })
-      .catch((err) => res.json({ status: "error", error: err }));
+      .catch((err) => {
+        res.status(400);
+        res.json({ status: "error", error: err });
+      });
   }
 );
 
