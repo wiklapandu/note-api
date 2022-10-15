@@ -123,8 +123,8 @@ Create an Account for the authenticated User if an Account for that User does no
 ```json
 {
     "name": "[required]",
-    "email": "[required|unique]",
-    "password": "[required]"
+    "email": "[required|email|unique]",
+    "password": "[required|min:8]"
 }
 ```
 
