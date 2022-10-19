@@ -287,36 +287,34 @@ router.post(
       return;
     }
     User.findOne({ email }).then((user) => {
-      if (!user) {
+      if (!bcrypt.compareSync(password, user.password)) {
         res.status(400);
         res.json({
           status: "fail",
           errors: {
             main: {
-              msg: "User doesn't exist",
+              msg: "user password incorrect",
             },
           },
         });
       } else {
-        if (!bcrypt.compareSync(password, user.password)) {
-          res.status(400);
-          res.json({
-            status: "fail",
-            errors: {
-              main: {
-                msg: "user password incorrect",
-              },
-            },
-          });
-        } else {
-          const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.SECRET_JWT_CODE
-          );
-          res.status(200);
-          res.json({ status: "success", token });
-        }
+        const token = jwt.sign(
+          { id: user._id, email: user.email },
+          process.env.SECRET_JWT_CODE
+        );
+        res.status(200);
+        res.json({ status: "success", token });
       }
+    }).catch(error=>{
+      res.status(400);
+      res.json({
+        status: "fail",
+        errors: {
+          main: {
+            msg: "User doesn't exist",
+          },
+        },
+      });
     });
   }
 );
@@ -329,8 +327,11 @@ router.post(
     .isEmail()
     .withMessage("Email format invalid!"),
   body("email").custom((value) => {
-    return User.findOne({ email: value }).then(() =>
-      Promise.reject("Email already exist!")
+    return User.findOne({ email: value }).then((user) =>{
+      if(user !== null) {
+        return Promise.reject("Email already exist!")
+      }
+    }
     );
   }),
   body("name").notEmpty().withMessage("Name is required!"),
