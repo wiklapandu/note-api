@@ -82,6 +82,7 @@ router.get("/note", checkToken, (req, res) => {
           id: note._id,
           title: note.title,
           slug: note.slug,
+          color: note.color,
           desc: note.desc,
           created_at: note.created_at,
           updated_at: note.updated_at,
@@ -157,6 +158,7 @@ router.get("/note/:id", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          color: note.color,
           created_at: note.created_at,
           updated_at: note.updated_at,
         },
@@ -191,7 +193,7 @@ router.delete("/note/:id", checkToken, (req, res) => {
 
 router.put("/note/:id", checkToken, (req, res) => {
   const { id } = req.params;
-  const { title, desc } = req.body;
+  const { title, desc, color } = req.body;
   const date = new Date();
 
   const user = req.user;
@@ -202,6 +204,7 @@ router.put("/note/:id", checkToken, (req, res) => {
       title,
       slug: slugify(title) + `-${date.getTime()}`,
       desc,
+      color,
       updated_at: date.getTime(),
     }
   )
@@ -214,6 +217,7 @@ router.put("/note/:id", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          color: note.color,
           created_at: note.created_at,
           updated_at: note.updated_at,
         },
@@ -230,13 +234,14 @@ router.put("/note/:id", checkToken, (req, res) => {
 
 router.post("/note", checkToken, (req, res) => {
   const user = req.user;
-  const { title, desc } = req.body;
+  const { title, desc, color } = req.body;
   const date = new Date();
   Note.create({
     title: title || "untitled",
     userId: user._id,
     slug: slugify(title) + `-${date.getTime()}`,
     desc,
+    color,
     created_at: date.getTime(),
     updated_at: date.getTime(),
   })
@@ -249,6 +254,7 @@ router.post("/note", checkToken, (req, res) => {
           title: note.title,
           slug: note.slug,
           desc: note.desc,
+          color: note.color,
           created_at: note.created_at,
           updated_at: note.updated_at,
         },

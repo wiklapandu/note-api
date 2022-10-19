@@ -13,6 +13,10 @@ const NoteSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  color: {
+    type: String,
+    default: "red",
+  },
   created_at: {
     type: String,
   },
