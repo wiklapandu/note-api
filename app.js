@@ -388,3 +388,6 @@ app.use("/api", router);
 app.listen(port, () => {
   console.log(`Running in port ${port}`);
 });
+
+// export
+module.exports = app;
